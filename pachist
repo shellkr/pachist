@@ -1,0 +1,18 @@
+#!/bin/bash
+
+## Coloring
+col_1="black"
+col_2="white"
+col_3="blue"
+
+## What type of packages to list
+fltr_1="starting"
+fltr_2="upgraded"
+fltr_3="downgraded"
+fltr_4="\[PACMAN\].*installed"
+[ "$1" = "-v" ] && fltr_5="ALPM-SCRIPTLET" || fltr_5="BAJS"
+
+awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\)/'{print $1,$2,substr($0, index($0,$4))}' \
+/var/log/pacman.log | sed "s/.*full.*//" | colout '(\[.*\]) (.*) (\(.*\))' $col_1,$col_2,$col_3
+
+
