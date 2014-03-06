@@ -11,8 +11,8 @@ Usage: pachist [options] [number of lines]
 
 	options:
 	
-	-v				Show verbose messages
-	-h				Show this help
+	-v			Show verbose messages
+	-h			Show this help
 	<number>	Rows of lines to show
 
 
