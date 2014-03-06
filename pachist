@@ -10,7 +10,6 @@ fltr_1="starting"
 fltr_2="upgraded"
 fltr_3="downgraded"
 fltr_4="\[PACMAN\].*installed"
-#fltr_5="BAJS"
 
 ## The command that makes it happen.
 filter() {
@@ -43,13 +42,3 @@ help() {
 
 ## Print full log or just a couple of lines.
 [[ ! $* = "^[-0-9]+$" ]] && formatting | tail -n$(echo $* | grep -o "[0-9]*") || formatting
-
-#case $* in
-#	-h) help
-#	;;
-#	-v)
-#		fltr_5="ALPM-SCRIPTLET"
-#		formatting
-#	;;
-#	*[0-9]*) formatting | tail -n$1
-#esac
