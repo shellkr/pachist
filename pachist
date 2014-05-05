@@ -1,4 +1,22 @@
 #!/bin/bash
+#
+#   pachist - A tool to show a more readable package history in Arch Linux
+#
+#   Copyright (C) 2013-2014 Daniel Sandman <revoltism@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 ## Coloring
 col_1="black"
@@ -10,6 +28,41 @@ fltr_1="starting"
 fltr_2="upgraded"
 fltr_3="downgraded"
 fltr_4="\[PACMAN\].*installed"
+fltr_5="BAJS"
+
+## How many lines to show
+lines="20"
+
+usage() {
+	printf "$(gettext "pachist version 0.0.4")\n\n"  "$(basename $0)"
+
+	printf "$(gettext "usage: %s [options] <number of lines>")\n\n" "$(basename $0)"
+
+	printf "$(gettext "options:")\n"
+	printf "$(gettext "   -h, --help		Show this help")\n"
+	printf "$(gettext "   -v, --verbose	Show messages")\n"
+	printf "$(gettext "   <number>		Number of lines to show")\n\n"
+
+	printf "$(gettext "examples:")\n"
+	printf "$(gettext "   %s -v 50")\n" "$(basename $0)"
+	printf "$(gettext "   yaourt -Syua --devel --noconfirm && %s -v 50")\n\n" "$(basename $0)"
+
+	exit 0
+}
+
+check_args() {
+#	while getopts ":hv" opt; do
+	while [ "$#" -ne "0" ]; do
+    	case $1 in
+      		-h) usage ;;
+      		-v) fltr_5="ALPM-SCRIPTLET" ;;
+      		*[0-9]*) lines=$(echo $* | grep -o "[0-9]*");;
+      		*) args[${#args[@]}]=$1 ;;
+		esac
+		shift
+	done
+}
+
 
 ## The command that makes it happen.
 filter() {
@@ -21,24 +74,10 @@ formatting() {
 	filter | sed "s/.*full.*//" | colout '(\[.*\]) (.*) (\(.*\))' $col_1,$col_2,$col_3
 }
 
-help() {
-	echo 'pachist version 0.0.2'
-	echo ''
-	echo 'usage: pachist [options] [number of lines]'
-	echo ''
-	echo 'options:'
-	echo '	-v		Show verbose messages'
-	echo '	-h		Show this help'
-	echo '	<number>	Rows of lines to show'
-	echo ''
-	exit
+## execute and show the endresult
+run_pachist() {
+	check_args $@
+	formatting | tail -n$lines
 }
 
-## Add the verbose prefix to show messages.
-[[ $* =~ "-h" ]] && help
-
-## Add the verbose prefix to show messages.
-[[ $* =~ "-v" ]] && fltr_5="ALPM-SCRIPTLET" || fltr_5="BAJS"
-
-## Print full log or just a couple of lines.
-[[ ! $* = "^[-0-9]+$" ]] && formatting | tail -n$(echo $* | grep -o "[0-9]*") || formatting
+run_pachist $@
