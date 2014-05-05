@@ -51,7 +51,6 @@ usage() {
 }
 
 check_args() {
-#	while getopts ":hv" opt; do
 	while [ "$#" -ne "0" ]; do
     	case $1 in
       		-h) usage ;;
