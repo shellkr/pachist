@@ -18,11 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-## Coloring
-col_1="black"
-col_2="white"
-col_3="blue"
-
 ## What type of packages to list
 fltr_1="starting"
 fltr_2="upgraded"
@@ -30,11 +25,19 @@ fltr_3="downgraded"
 fltr_4="\[PACMAN\].*installed"
 fltr_5="BAJS"
 
-## How many lines to show
-lines="20"
+init_script() {
+	## Create default conf if it doesn't exist
+	[ ! -e "$HOME/.config/pachist.conf" ] && {
+		touch $HOME/.config/pachist.conf
+		printf '# This configuration file is created automatically with\n' >> $HOME/.config/pachist.conf
+		printf '# default settings upon removal.\n\n' >> $HOME/.config/pachist.conf
+		printf '[Lines]\nlines="20"\n\n'  >> $HOME/.config/pachist.conf
+		printf '[Colors]\ncolor1="black"\ncolor2="white"\ncolor3="blue"\n\n' >> $HOME/.config/pachist.conf
+	}
+}
 
 usage() {
-	printf "$(gettext "pachist version 0.0.4")\n\n"  "$(basename $0)"
+	printf "$(gettext "pachist version 0.0.7")\n\n"  "$(basename $0)"
 
 	printf "$(gettext "usage: %s [options] <number of lines>")\n\n" "$(basename $0)"
 
@@ -47,10 +50,22 @@ usage() {
 	printf "$(gettext "   %s -v 50")\n" "$(basename $0)"
 	printf "$(gettext "   yaourt -Syua --devel --noconfirm && %s -v 50")\n\n" "$(basename $0)"
 
+	printf "$(gettext "configuration:")\n"
+	printf "$(gettext "   The configuration file can be found at")\n" "$(basename $0)"
+	printf "$(gettext "   $HOME/.config/pachist.conf")\n\n" "$(basename $0)"
+
 	exit 0
 }
 
+get_colors() {
+	## fetch colors from config
+	col_1="$(awk -F'"' '/color1/{print $2}' $HOME/.config/pachist.conf)"
+	col_2="$(awk -F'"' '/color2/{print $2}' $HOME/.config/pachist.conf)"
+	col_3="$(awk -F'"' '/color3/{print $2}' $HOME/.config/pachist.conf)"
+}
+
 check_args() {
+	## Add options
 	while [ "$#" -ne "0" ]; do
     	case $1 in
       		-h) usage ;;
@@ -68,15 +83,39 @@ filter() {
 	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\)/'{print $1,$2,substr($0, index($0,$4))}' /var/log/pacman.log
 }
 
+## Insert last reboot.. (thanks to ymonad @ stackoverflow for this one)
+insert_reboot() {
+	fg="\e[0;;31m"
+	BOOT_TIME=$(who -b | cut -d' ' -f12,13)
+	REBOOT_FLAG=""
+	while read line;do
+  		TMP1=${line%]*}
+  		TMP2=${TMP1#[}
+  		if [ -z "$REBOOT_FLAG" ] && [ "$TMP2" \> "$BOOT_TIME" ];then
+    		echo -e "[$BOOT_TIME] "$fg"SYSTEM REBOOT (last)"
+			echo
+    		REBOOT_FLAG="true"
+  		fi
+	echo "$line"
+	done
+}
+
 ## finish with some colour and formatting.
 formatting() {
-	filter | sed "s/.*full.*//" | colout '(\[.*\]) (.*) (\(.*\))' $col_1,$col_2,$col_3
+	insert_reboot < <(filter | sed "s/.*full.*//")
 }
 
 ## execute and show the endresult
 run_pachist() {
+	init_script
+
+	## Default number of lines to show
+	lines="$(awk -F'"' '/lines/{print $2}' $HOME/.config/pachist.conf)"
+
 	check_args $@
-	formatting | tail -n$lines
+	get_colors
+
+	formatting | colout '(\[.*\]) (.*) (\(.*\))' $col_1,$col_2,$col_3 | tail -n$lines
 }
 
 run_pachist $@
