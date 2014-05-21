@@ -85,7 +85,7 @@ filter() {
 
 ## Insert last reboot.. (thanks to ymonad @ stackoverflow for this one)
 insert_reboot() {
-	fg="\e[0;;31m"
+	fg="\e[0;;31m" # red color
 	BOOT_TIME=$(who -b | cut -d' ' -f12,13)
 	REBOOT_FLAG=""
 	while read line;do
@@ -100,7 +100,7 @@ insert_reboot() {
 	done
 }
 
-## finish with some colour and formatting.
+## Add some formatting and reboot message
 formatting() {
 	insert_reboot < <(filter | sed "s/.*full.*//")
 }

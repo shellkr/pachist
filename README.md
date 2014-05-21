@@ -17,3 +17,4 @@ Usage: pachist [options] [number of lines]
 
 The configuration file can be found at ~/.config/pachist.conf and currently holds ability to change default colors and number of lines to be shown.
 
+![ScreenShot](https://raw.github.com/Almehdi/pachist/master/screenshot2.png)
