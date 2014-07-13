@@ -45,6 +45,7 @@ usage() {
 	printf "$(gettext "options:")\n"
 	printf "$(gettext "   -h, --help		Show this help")\n"
 	printf "$(gettext "   -v, --verbose	Show messages")\n"
+	printf "$(gettext "   -err, 		Not as verbose just warning messages")\n"
 	printf "$(gettext "   <number>		Number of lines to show")\n\n"
 
 	printf "$(gettext "examples:")\n"
@@ -71,6 +72,7 @@ check_args() {
     	case $1 in
       		-h) usage ;;
       		-v) fltr_6="ALPM-SCRIPTLET" ;;
+			-err) fltr_6="[Ww]arning" ;;
       		*[0-9]*) lines=$(echo $* | grep -o "[0-9]*");;
       		*) args[${#args[@]}]=$1 ;;
 		esac
