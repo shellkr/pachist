@@ -19,12 +19,13 @@
 #
 
 ## What type of packages to list
-fltr_1="starting"
-fltr_2="upgraded"
-fltr_3="downgraded"
-fltr_4="\[PACMAN\].*installed"
-fltr_5="\[PACMAN\].*removed"
-fltr_6="BAJS"
+fltr_1="\[PACMAN\].starting"
+fltr_2="\[PACMAN\].upgraded"
+fltr_3="\[PACMAN\].downgraded"
+fltr_4="\[PACMAN\].installed"
+fltr_5="\[PACMAN\].reinstalled"
+fltr_6="\[PACMAN\].removed"
+fltr_7="BAJS"
 
 init_script() {
 	## Create default conf if it doesn't exist
@@ -45,7 +46,7 @@ usage() {
 	printf "$(gettext "options:")\n"
 	printf "$(gettext "   -h, --help		Show this help")\n"
 	printf "$(gettext "   -v, --verbose	Show messages")\n"
-	printf "$(gettext "   -err, 		Not as verbose just warning messages")\n"
+	printf "$(gettext "       --err,		Not as verbose just warning messages")\n"
 	printf "$(gettext "   <number>		Number of lines to show")\n\n"
 
 	printf "$(gettext "examples:")\n"
@@ -70,9 +71,9 @@ check_args() {
 	## Add options
 	while [ "$#" -ne "0" ]; do
     	case $1 in
-      		-h) usage ;;
-      		-v) fltr_6="ALPM-SCRIPTLET" ;;
-			-err) fltr_6="[Ww]arning" ;;
+      		-h|--help) usage ;;
+      		-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
+		--err) fltr_7="[Ww]arning" ;;
       		*[0-9]*) lines=$(echo $* | grep -o "[0-9]*");;
       		*) args[${#args[@]}]=$1 ;;
 		esac
@@ -83,7 +84,7 @@ check_args() {
 
 ## The command that makes it happen.
 filter() {
-	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\|$fltr_6\)/'{print $1,$2,substr($0, index($0,$4))}' /var/log/pacman.log
+	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\|$fltr_6\|$fltr_7\)/'{if ($4!="") print $1,$2,substr($0, index($0,$3)+length($3)+1)}' /var/log/pacman.log
 }
 
 ## Insert last reboot.. (thanks to ymonad @ stackoverflow for this one)
@@ -118,7 +119,7 @@ run_pachist() {
 	check_args $@
 	get_colors
 
-	formatting | colout '(\[.*\]) (.*) (\(.*\))' $col_1,$col_2,$col_3 | tail -n$lines
+	formatting | colout '(\[.*\]) (starting.*|upgraded.*|downgraded.*|installed.*|reinstalled.*|removed.*) (\(.*\))' $col_1,$col_2,$col_3 | tail -n$lines
 }
 
 run_pachist $@
