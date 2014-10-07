@@ -46,7 +46,7 @@ usage() {
 	printf "$(gettext "options:")\n"
 	printf "$(gettext "   -h, --help		Show this help")\n"
 	printf "$(gettext "   -v, --verbose	Show messages")\n"
-	printf "$(gettext "       --err,		Not as verbose just warning messages")\n"
+	printf "$(gettext "       --err		Not as verbose, just warning messages")\n"
 	printf "$(gettext "   <number>		Number of lines to show")\n\n"
 
 	printf "$(gettext "examples:")\n"
@@ -92,13 +92,13 @@ insert_reboot() {
 	fg="\e[0;;31m" # red color
 	BOOT_TIME=$(who -b | cut -d' ' -f12,13)
 	REBOOT_FLAG=""
-	while read line;do
+	while read line; do
   		TMP1=${line%]*}
   		TMP2=${TMP1#[}
-  		if [ -z "$REBOOT_FLAG" ] && [ "$TMP2" \> "$BOOT_TIME" ];then
-    		echo -e "[$BOOT_TIME] "$fg"SYSTEM REBOOT (last)"
+  		if [ -z "$REBOOT_FLAG" ] && [ "$TMP2" \> "$BOOT_TIME" ]; then
+			echo -e "[$BOOT_TIME] "$fg"SYSTEM REBOOT (last)"
 			echo
-    		REBOOT_FLAG="true"
+			REBOOT_FLAG="true"
   		fi
 	echo "$line"
 	done
@@ -106,7 +106,7 @@ insert_reboot() {
 
 ## Add some formatting and reboot message
 formatting() {
-	insert_reboot < <(filter | sed "s/.*full.*//")
+	insert_reboot < <(filter | sed "s/.*starting full system upgrade//" | cat -s)
 }
 
 ## execute and show the endresult
