@@ -19,12 +19,12 @@
 #
 
 ## What type of packages to list
-fltr_1="\[PACMAN\].starting"
-fltr_2="\[PACMAN\].upgraded"
-fltr_3="\[PACMAN\].downgraded"
-fltr_4="\[PACMAN\].installed"
-fltr_5="\[PACMAN\].reinstalled"
-fltr_6="\[PACMAN\].removed"
+fltr_1="\[ALPM\].starting"
+fltr_2="\[ALPM\].upgraded"
+fltr_3="\[ALPM\].downgraded"
+fltr_4="\[ALPM\].installed"
+fltr_5="\[ALPM\].reinstalled"
+fltr_6="\[ALPM\].removed"
 fltr_7="BAJS"
 
 init_script() {
