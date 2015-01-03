@@ -19,9 +19,9 @@
 #
 
 ## What type of packages to list
-fltr_1="\[ALPM\].starting"
-fltr_2="\[ALPM\].upgraded"
-fltr_3="\[ALPM\].downgraded"
+fltr_1="starting"
+fltr_2="upgraded"
+fltr_3="downgraded"
 fltr_4="\[ALPM\].installed"
 fltr_5="\[ALPM\].reinstalled"
 fltr_6="\[ALPM\].removed"
@@ -39,7 +39,7 @@ init_script() {
 }
 
 usage() {
-	printf "$(gettext "pachist version 0.0.7")\n\n"  "$(basename $0)"
+	printf "$(gettext "pachist version 0.0.9")\n\n"  "$(basename $0)"
 
 	printf "$(gettext "usage: %s [options] <number of lines>")\n\n" "$(basename $0)"
 
@@ -84,18 +84,20 @@ check_args() {
 
 ## The command that makes it happen.
 filter() {
-	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\|$fltr_6\|$fltr_7\)/'{if ($4!="") print $1,$2,substr($0, index($0,$3)+length($3)+1)}' /var/log/pacman.log
+	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\|$fltr_6\|$fltr_7\|starting\)/'{if ($4!="" && $5!="full") print $1,$2,substr($0, index($0,$3)+length($3)+1); else if ($5="full") print "";}' /var/log/pacman.log
+
 }
 
 ## Insert last reboot.. (thanks to ymonad @ stackoverflow for this one)
 insert_reboot() {
 	fg="\e[0;;31m" # red color
-	BOOT_TIME=$(who -b | cut -d' ' -f12,13)
+	BOOT_TIME=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 	REBOOT_FLAG=""
 	while read line; do
   		TMP1=${line%]*}
   		TMP2=${TMP1#[}
   		if [ -z "$REBOOT_FLAG" ] && [ "$TMP2" \> "$BOOT_TIME" ]; then
+			echo
 			echo -e "[$BOOT_TIME] "$fg"SYSTEM REBOOT (last)"
 			echo
 			REBOOT_FLAG="true"
@@ -106,7 +108,7 @@ insert_reboot() {
 
 ## Add some formatting and reboot message
 formatting() {
-	insert_reboot < <(filter | sed "s/.*starting full system upgrade//" | cat -s)
+	insert_reboot < <(filter | cat -s)
 }
 
 ## execute and show the endresult
