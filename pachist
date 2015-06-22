@@ -83,32 +83,31 @@ check_args() {
 
 
 ## The command that makes it happen.
-filter() {
-	awk -F' ' /\($fltr_1\|$fltr_2\|$fltr_3\|$fltr_4\|$fltr_5\|$fltr_6\|$fltr_7\|starting\)/'{if ($4!="" && $5!="full") print $1,$2,substr($0, index($0,$3)+length($3)+1); else if ($5="full") print "";}' /var/log/pacman.log
+filter_and_format_output() {
+	keywords="$fltr_1|$fltr_2|$fltr_3|$fltr_4|$fltr_5|$fltr_6|$fltr_7"
+	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
-}
+	awk -F' ' -v  boot_time="${boot_time}" /\("$keywords"\)/'{
+	if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
+		print $1, $2, substr($0, index($0,$3)+length($3)+1)
+	} else if ($3 == "[ALPM]") {
+		red = "\033[31m"
+		off = "\033[1;0m"
 
-## Insert last reboot.. (thanks to ymonad @ stackoverflow for this one)
-insert_reboot() {
-	fg="\e[0;;31m" # red color
-	BOOT_TIME=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
-	REBOOT_FLAG=""
-	while read line; do
-  		TMP1=${line%]*}
-  		TMP2=${TMP1#[}
-  		if [ -z "$REBOOT_FLAG" ] && [ "$TMP2" \> "$BOOT_TIME" ]; then
-			echo
-			echo -e "[$BOOT_TIME] "$fg"SYSTEM REBOOT (last)"
-			echo
-			REBOOT_FLAG="true"
-  		fi
-	echo "$line"
-	done
-}
+		if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
+			date = substr($0, RSTART, RLENGTH)
+			if (!reboot_flag && date > boot_time) {
+				print ""
+				print "[" boot_time "]" red " SYSTEM REBOOT (last)" off
+				print ""
+				reboot_flag = "1";
+			}
+		}
 
-## Add some formatting and reboot message
-formatting() {
-	insert_reboot < <(filter | cat -s)
+		print $1, $2, $4, $5, substr($0, index($0,$6))
+	} else if (substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
+		print ""
+	}}' /var/log/pacman.log | cat -s
 }
 
 ## execute and show the endresult
@@ -121,7 +120,7 @@ run_pachist() {
 	check_args $@
 	get_colors
 
-	formatting | colout '(\[.*\]) (starting.*|upgraded.*|downgraded.*|installed.*|reinstalled.*|removed.*) (\(.*\))' $col_1,$col_2,$col_3 | tail -n$lines
+	filter_and_format_output | colout '(\[.*\]) (starting.*|upgraded.*|downgraded.*|installed.*|reinstalled.*|removed.*) (\(.*\))' $col_1,$col_2,$col_3 | tail -n$lines
 }
 
 run_pachist $@
