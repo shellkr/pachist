@@ -15,6 +15,7 @@ Usage: pachist [options] [number of lines]
 	-v, --verbose	Show verbose messages
 	    --err		Not as verbose, just warning messages
 	<number>		Rows of lines to show
+	-q, --quiet		Show less information
 
 The configuration file can be found at ~/.config/pachist.conf and currently holds ability to change default colors and number of lines to be shown.
 
