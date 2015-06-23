@@ -47,6 +47,7 @@ usage() {
 	printf "$(gettext "   -h, --help		Show this help")\n"
 	printf "$(gettext "   -v, --verbose	Show messages")\n"
 	printf "$(gettext "       --err		Not as verbose, just warning messages")\n"
+	printf "$(gettext "   -q, --quiet               Show less information")\n"
 	printf "$(gettext "   <number>		Number of lines to show")\n\n"
 
 	printf "$(gettext "examples:")\n"
@@ -94,6 +95,7 @@ check_args() {
       		-h|--help) usage ;;
       		-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
 		--err) fltr_7="[Ww]arning" ;;
+		-q|--quiet) quiet=1 ;;
       		*[0-9]*) lines=$(echo $* | grep -o "[0-9]*");;
       		*) args[${#args[@]}]=$1 ;;
 		esac
@@ -107,8 +109,10 @@ filter_and_format_output() {
 	keywords="$fltr_1|$fltr_2|$fltr_3|$fltr_4|$fltr_5|$fltr_6|$fltr_7"
 	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
-	awk -F' ' -v  boot_time="${boot_time}" -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 /\("$keywords"\)/'{
-	if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
+	awk -F' ' -v  boot_time="${boot_time}" -v quiet=$quiet -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 /\("$keywords"\)/'{
+	if (quiet) {
+		if ($3 == "[ALPM]" && $4 != "warning:") print $5
+	} else if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
 		print $1, $2, substr($0, index($0,$3)+length($3)+1)
 	} else if ($3 == "[ALPM]") {
 		red = "\033[31m"
