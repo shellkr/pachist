@@ -44,11 +44,11 @@ usage() {
 	printf "$(gettext "usage: %s [options] <number of lines>")\n\n" "$(basename $0)"
 
 	printf "$(gettext "options:")\n"
-	printf "$(gettext "   -h, --help		Show this help")\n"
-	printf "$(gettext "   -v, --verbose	Show messages")\n"
-	printf "$(gettext "       --err		Not as verbose, just warning messages")\n"
-	printf "$(gettext "   -q, --quiet	Show less information")\n"
-	printf "$(gettext "   <number>		Number of lines to show")\n\n"
+	printf "$(gettext "   -h, --help        Show this help")\n"
+	printf "$(gettext "   -v, --verbose     Show messages")\n"
+	printf "$(gettext "       --err         Not as verbose, just warning messages")\n"
+	printf "$(gettext "   -q, --quiet       Show less information")\n"
+	printf "$(gettext "   <number>          Number of lines to show")\n\n"
 
 	printf "$(gettext "examples:")\n"
 	printf "$(gettext "   %s -v 50")\n" "$(basename $0)"
