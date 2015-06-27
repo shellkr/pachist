@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+version=$(awk 'END {print $1}' < <(man pachist))
+
 ## What type of packages to list
 fltr_1="starting"
 fltr_2="upgraded"
@@ -39,15 +41,16 @@ init_script() {
 }
 
 usage() {
-	printf "%s version 0.0.9\n\n"  "$(basename $0)"
+	printf "%s version ${version##pachist-}\n\n"  "$(basename $0)"
 
 	printf "usage: %s [options] <number of lines>\n\n" "$(basename $0)"
 
 	printf "options:\n"
 	printf "   -h, --help        Show this help\n"
-	printf "   -v, --verbose     Show messages\n"
 	printf "       --err         Not as verbose, just warning messages\n"
 	printf "   -q, --quiet       Show less information\n"
+	printf "   -v, --verbose     Show messages\n"
+	printf "   -V, --version     Show version\n"
 	printf "   <number>          Number of lines to show\n\n"
 
 	printf "examples:\n"
@@ -96,6 +99,7 @@ check_args() {
       		-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
 		--err) fltr_7="[Ww]arning" ;;
 		-q|--quiet) quiet=1 ;;
+		-V|--version) echo $version && exit 0 ;;
 		*[0-9]*) lines=$(echo $* | grep -o "[0-9,]*")
 			check_args ${1%%[0-9,]*};;
       		*) args[${#args[@]}]=$1 ;;

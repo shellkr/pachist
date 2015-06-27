@@ -4,9 +4,10 @@ pachist \- a simple tool to view history of installed packages
 .SH SYNOPSIS
 .B pachist
 .RB [ \-h ]
-.RB [ \-v ]
 .RB [ \-\-err ]
 .RB [ \-q ]
+.RB [ \-v ]
+.RB [ \-V ]
 .RI [ <number> ]
 .SH DESCRIPTION
 .B pachist
@@ -19,15 +20,18 @@ verbose option can sometimes be important as it show install messages
 \fB\-h\fR, \fB\-\-help\fR
 Show a brief help.
 .TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Show install messages. Like recomended or necessary steps that needs to be taken.
-.TP
 \ \ \ \ \fB\-\-err\fR
 Not as verbose as the '-v' option. Just to show warning messages.
 .TP
 \fB\-q\fR, \fB\-\-quiet\fR
 Show less information. It will show only the package names which is good if you
 want to pipe it's output with pacman. 
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Show install messages. Like recomended or necessary steps that needs to be taken.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Show current version.
 .TP
 \fI<number>\fR
 The number of lines to show.
