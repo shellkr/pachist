@@ -1,0 +1,58 @@
+.TH PACHIST 1 pachist\-0.1.0
+.SH NAME
+pachist \- a simple tool to view history of installed packages
+.SH SYNOPSIS
+.B pachist
+.RB [ \-h ]
+.RB [ \-v ]
+.RB [ \-\-err ]
+.RB [ \-q ]
+.RI [ <number> ]
+.SH DESCRIPTION
+.B pachist
+is a small program written in bash to show installed package history in
+Arch Linux. It can be used by it's own or even better ran directly after 
+another command like 'yaourt -Syua --devel --noconfirm && pachist'. The 
+verbose option can sometimes be important as it show install messages
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show a brief help.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Show install messages. Like recomended or necessary steps that needs to be taken.
+.TP
+\ \ \ \ \fB\-\-err\fR
+Not as verbose as the '-v' option. Just to show warning messages.
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Show less information. It will show only the package names which is good if you
+want to pipe it's output with pacman. 
+.TP
+\fI<number>\fR
+The number of lines to show.
+
+It also have support to show range of lines. The syntax is either <n> for total number 
+of lines or <n>,<n> for a range were the first number before the comma tells which line
+from the bottom to start with and the number after the comma describes the total number
+of lines to show. It can be very usefull together with the \fB-q\fR flag.
+.SH EXAMPLES
+pachist -v 50
+.TP
+yaourt -Syua --devel --noconfirm && pachist -v 50
+.TP
+pachist -q 22 
+.TP
+pachist -q 3,8 | pacman -R -
+.SH CUSTOMIZATION
+The configuration file can be found in $XDG_CONFIG_HOME and offer the ability to 
+change the default colors and number of lines to show.
+.SH AUTHORS
+See the LICENSE file for the authors.
+.SH LICENSE
+See the LICENSE file for the terms of redistribution.
+.SH SEE ALSO
+.BR pacman (1),
+.BR yaourt (1)
+.SH BUGS
+Please report them. The source can be found at https://github.com/Almehdi/pachist.
