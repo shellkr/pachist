@@ -48,6 +48,7 @@ usage() {
 	printf "options:\n"
 	printf "   -h, --help        Show this help\n"
 	printf "       --err         Not as verbose, just warning messages\n"
+	printf "   -n, --num         Show line numbers\n"
 	printf "   -q, --quiet       Show less information\n"
 	printf "   -v, --verbose     Show messages\n"
 	printf "   -V, --version     Show version\n"
@@ -102,6 +103,7 @@ check_args() {
 		-V|--version) echo $version && exit 0 ;;
 		*[0-9]*) lines=$(echo $* | grep -o "[0-9,]*")
 			check_args ${1%%[0-9,]*};;
+		-n|--num) num=1 ;;
       		*) args[${#args[@]}]=$1 ;;
 		esac
 		shift
@@ -114,9 +116,13 @@ filter_and_format_output() {
 	keywords="$fltr_1|$fltr_2|$fltr_3|$fltr_4|$fltr_5|$fltr_6|$fltr_7"
 	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
+	tac /var/log/pacman.log |
 	awk -F' ' -v  boot_time="${boot_time}" -v quiet=$quiet -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 /\("$keywords"\)/'{
 	if (quiet) {
-		if ($3 == "[ALPM]" && $4 != "warning:") print $5
+		if ($3 == "[ALPM]" && $4 != "warning:" && !($5 in pkg_array)) {
+			pkg_array[$5]++
+			print $5
+		}
 	} else if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
 		print $1, $2, substr($0, index($0,$3)+length($3)+1)
 	} else if ($3 == "[ALPM]") {
@@ -125,7 +131,7 @@ filter_and_format_output() {
 
 		if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
 			date = substr($0, RSTART, RLENGTH)
-			if (!reboot_flag && date > boot_time) {
+			if (!reboot_flag && date < boot_time) {
 				print ""
 				print "[" boot_time "]" red " SYSTEM REBOOT (last)" off
 				print ""
@@ -136,7 +142,12 @@ filter_and_format_output() {
 		print col_1 $1, $2, col_2 $4, $5, col_3 substr($0, index($0,$6)) off
 	} else if (substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
 		print ""
-	}}' /var/log/pacman.log | cat -s
+	}}' | 
+	cat -s |
+	sed '/./,$!d' |
+	([[ $num ]] && nl -ba -nln -w3 -s ' ' || cat) |
+	sed -n -e $rows'p' |
+	tac
 }
 
 ## execute and show the endresult
@@ -151,7 +162,7 @@ run_pachist() {
 
 	[[ $lines != *,* ]] && rows="1,$lines" || rows="$lines"  
 
-	filter_and_format_output | tac | sed -n -e $rows'p' | tac
+	filter_and_format_output 
 }
 
 run_pachist $@

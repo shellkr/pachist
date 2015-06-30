@@ -5,6 +5,7 @@ pachist \- a simple tool to view history of installed packages
 .B pachist
 .RB [ \-h ]
 .RB [ \-\-err ]
+.RB [ \-n ]
 .RB [ \-q ]
 .RB [ \-v ]
 .RB [ \-V ]
@@ -22,6 +23,10 @@ Show a brief help.
 .TP
 \ \ \ \ \fB\-\-err\fR
 Not as verbose as the '-v' option. Just to show warning messages.
+.TP
+\fB\-n\fR, \fB\-\-num\fR
+Show line numbers. It will put a number infront of every line making it easier
+to see which lines you want to output. Good in combination with the -q flag.
 .TP
 \fB\-q\fR, \fB\-\-quiet\fR
 Show less information. It will show only the package names which is good if you
