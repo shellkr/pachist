@@ -1,0 +1,50 @@
+#compdef pachist
+
+# Completion file for pachist, based on yaourt's
+
+# copy this file to /usr/share/zsh/site-functions/_pachist
+
+# handles --help subcommand
+_pachist_action_help() {
+    _arguments -s : \
+        "$_pachist_opts_commands[@]"
+}
+
+# handles cases where no subcommand has yet been given
+_pachist_action_none() {
+    _arguments -s : \
+        "$_pachist_opts_commands[@]"
+}
+
+# handles --version subcommand
+_pachist_action_version() {
+    # no further arguments
+    return 0
+}
+
+# main dispatcher
+_pachist() {
+    typeset -A opt_args
+
+    # options for passing to _arguments: main pacman commands
+    typeset -a _pachist_opts_commands
+    _pachist_opts_commands=(
+        '-h[Show a brief help]'
+        '-n[Show line numbers]'
+        '-q[Show less information]'
+        '-v[Show more information]'
+        '-V[Display version and exit]'
+        '--date[Show output from a specific date]'
+        '--err[Show warning messages]'
+    )
+
+    case $words[2] in
+        -h)  _pachist_action_help     ;;
+        -V)  _pachist_action_version  ;;
+        - )  _pachist_action_none     ;;
+#       * )  return 1                 ;;
+    esac
+}
+
+# run the main dispatcher
+_pachist "$@"

@@ -46,16 +46,18 @@ usage() {
 	printf "usage: %s [options] <number of lines>\n\n" "$(basename $0)"
 
 	printf "options:\n"
+	printf "   -d, --date        Show output after date\n"
 	printf "   -h, --help        Show this help\n"
-	printf "       --err         Not as verbose, just warning messages\n"
 	printf "   -n, --num         Show line numbers\n"
 	printf "   -q, --quiet       Show less information\n"
 	printf "   -v, --verbose     Show messages\n"
 	printf "   -V, --version     Show version\n"
+	printf "       --warn        Not as verbose, just warning messages\n"
 	printf "   <number>          Number of lines to show\n\n"
 
 	printf "examples:\n"
 	printf "   %s -v 50\n" "$(basename $0)"
+	printf "   %s --date 'yesterday'\n" "$(basename $0)"
 	printf "   yaourt -Syua --devel --noconfirm && %s -v 50\n\n" "$(basename $0)"
 
 	printf "configuration:\n"
@@ -93,36 +95,58 @@ get_colors() {
 }
 
 check_args() {
-	## Add options
-	while [ "$#" -ne "0" ]; do
-    	case $1 in
-      		-h|--help) usage ;;
-      		-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
-		--err) fltr_7="[Ww]arning" ;;
-		-q|--quiet) quiet=1 ;;
-		-V|--version) echo $version && exit 0 ;;
-		*[0-9]*) lines=$(echo $* | grep -o "[0-9,]*")
-			check_args ${1%%[0-9,]*};;
-		-n|--num) num=1 ;;
-      		*) args[${#args[@]}]=$1 ;;
+	PARAM=$(getopt --options d:hnqvV \
+			--longoptions date:,help,num,quiet,verbose,version,warn \
+			--name "$0" -- "$@")
+
+	[[ $? != 0 ]] && exit 1
+
+	eval set -- "$PARAM"
+
+	while true; do
+		case $1 in
+			-d|--date) date_search="$(date +"%F" -d "${2}")"
+				[[ $? != 0 ]] && exit
+				lines="$"
+				shift ;;
+			-h|--help) usage ;;
+			-n|--num) num=1 ;;
+			-q|--quiet) quiet=1 ;;
+			-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
+			-V|--version) echo $version && exit 0 ;;
+			--warn) fltr_7="[Ww]arning" ;;
+			--) shift; break ;;
+			*) echo "pachist: error while parsing flag $1"; exit 1 ;;
 		esac
 		shift
 	done
+
+	for arg do
+		[[ $arg == *[0-9]* ]] && lines=$(echo $arg | grep -o "[0-9,]*")
+	done
 }
 
-
-## The command that makes it happen.
-filter_and_format_output() {
+filter() {
 	keywords="$fltr_1|$fltr_2|$fltr_3|$fltr_4|$fltr_5|$fltr_6|$fltr_7"
+
+	awk -F' ' -v quiet=$quiet /"($keywords)/ && /($date_search)"/'{
+	if (!quiet) {
+		print $0
+		next
+	}
+
+	if ($3 == "[ALPM]" && $4 != "warning:" && !($5 in pkg_array)) {
+		pkg_array[$5]++
+		print $0
+	}}'
+}
+
+format() {
 	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
-	tac /var/log/pacman.log |
-	awk -F' ' -v  boot_time="${boot_time}" -v quiet=$quiet -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 /\("$keywords"\)/'{
+	awk -F' ' -v  boot_time="${boot_time}" -v date_search="$date_search" -v quiet=$quiet -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 '{
 	if (quiet) {
-		if ($3 == "[ALPM]" && $4 != "warning:" && !($5 in pkg_array)) {
-			pkg_array[$5]++
-			print $5
-		}
+		print $5
 	} else if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
 		print $1, $2, substr($0, index($0,$3)+length($3)+1)
 	} else if ($3 == "[ALPM]") {
@@ -131,7 +155,7 @@ filter_and_format_output() {
 
 		if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
 			date = substr($0, RSTART, RLENGTH)
-			if (!reboot_flag && date < boot_time) {
+			if (!date_search && !reboot_flag && date < boot_time) {
 				print ""
 				print "[" boot_time "]" red " SYSTEM REBOOT (last)" off
 				print ""
@@ -142,7 +166,7 @@ filter_and_format_output() {
 		print col_1 $1, $2, col_2 $4, $5, col_3 substr($0, index($0,$6)) off
 	} else if (substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
 		print ""
-	}}' | 
+	}}' |
 	cat -s |
 	sed '/./,$!d' |
 	([[ $num ]] && nl -ba -nln -w3 -s ' ' || cat) |
@@ -157,12 +181,12 @@ run_pachist() {
 	## Default number of lines to show
 	lines="$(awk -F'"' '/lines/{print $2}' $HOME/.config/pachist.conf)"
 
-	check_args $@
+	check_args "$@"
 	get_colors
 
 	[[ $lines != *,* ]] && rows="1,$lines" || rows="$lines"  
 
-	filter_and_format_output 
+	tac /var/log/pacman.log | filter | format
 }
 
-run_pachist $@
+run_pachist "$@"
