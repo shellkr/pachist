@@ -187,7 +187,7 @@ format() {
 		}
 
 		print col_1 $1, $2, col_2 $4, $5, col_3 substr($0, index($0,$6)) off
-	} else if (substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
+	} else if (!pkg && substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
 		print ""
 	}}' |
 	cat -s |
