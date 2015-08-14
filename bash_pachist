@@ -1,10 +1,27 @@
 # pachist bash completion
 
+_pachist_pkg()
+{
+	\pacman -Qq 2>/dev/null
+	\awk '/\[ALPM\].removed/ {print $5}' /var/log/pacman.log 2>/dev/null
+}
+
 _pachist() 
 {
 	local cur prev words cword
 	_init_completion || return
 
+	case $prev in
+		-d|--date|-h|--help|-V|--version)
+			return
+			;;
+		-p|--package)
+			COMPREPLY=( $(compgen -W '$( _pachist_pkg )' -- "${cur}") )
+			return
+			;;
+	esac
+
 	COMPREPLY=( $(compgen -W '$( _parse_help "$1" )' -- "${cur}") )
 }
+
 complete -F _pachist pachist

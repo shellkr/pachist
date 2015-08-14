@@ -14,6 +14,7 @@ Usage: pachist [options] [number of lines]
 	-d, --date              Search by date
 	-h, --help              Show this help
 	-n, --num               Show line numbers
+	-p, --package           Show output about a specific package
 	-q, --quiet             Show less information
 	-v, --verbose           Show verbose messages
 	-V, --version           Show current version

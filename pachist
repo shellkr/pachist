@@ -49,6 +49,7 @@ usage() {
 	printf "   -d, --date        Show output after date\n"
 	printf "   -h, --help        Show this help\n"
 	printf "   -n, --num         Show line numbers\n"
+	printf "   -p, --package     Show output about a specific package\n"
 	printf "   -q, --quiet       Show less information\n"
 	printf "   -v, --verbose     Show messages\n"
 	printf "   -V, --version     Show version\n"
@@ -95,8 +96,8 @@ get_colors() {
 }
 
 check_args() {
-	PARAM=$(getopt --options d:hnqvV \
-			--longoptions date:,help,num,quiet,verbose,version,warn \
+	PARAM=$(getopt --options d:hnp:qvV \
+			--longoptions date:,help,num,package:,quiet,verbose,version,warn \
 			--name "$0" -- "$@")
 
 	[[ $? != 0 ]] && exit 1
@@ -111,6 +112,9 @@ check_args() {
 				shift ;;
 			-h|--help) usage ;;
 			-n|--num) num=1 ;;
+			-p|--package) pkg=$2
+				lines="$"
+				shift ;;
 			-q|--quiet) quiet=1 ;;
 			-v|--verbose) fltr_7="\[ALPM-SCRIPTLET\]|[Ww]arning" ;;
 			-V|--version) echo $version && exit 0 ;;
@@ -129,13 +133,23 @@ check_args() {
 filter() {
 	keywords="$fltr_1|$fltr_2|$fltr_3|$fltr_4|$fltr_5|$fltr_6|$fltr_7"
 
-	awk -F' ' -v quiet=$quiet /"($keywords)/ && /($date_search)"/'{
+	awk -F' ' -v quiet=$quiet -v pkg=$pkg /"($keywords)/ && /($date_search)"/'{
+
 	if (!quiet) {
-		print $0
+		info = info "\n" $0
+		if ($3 == "[ALPM]") {
+			if (pkg == $5) print info
+			info = ""
+		}
+
+		if (!pkg) print $0
+
 		next
 	}
 
 	if ($3 == "[ALPM]" && $4 != "warning:" && !($5 in pkg_array)) {
+		if (pkg && pkg != $5) next
+
 		pkg_array[$5]++
 		print $0
 	}}'
@@ -144,7 +158,13 @@ filter() {
 format() {
 	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
-	awk -F' ' -v  boot_time="${boot_time}" -v date_search="$date_search" -v quiet=$quiet -v col_1=$col_1 -v col_2=$col_2 -v col_3=$col_3 '{
+	awk -F' ' -v boot_time="${boot_time}" \
+		  -v date_search="$date_search" \
+		  -v pkg=$pkg \
+		  -v quiet=$quiet \
+		  -v col_1=$col_1 \
+		  -v col_2=$col_2 \
+		  -v col_3=$col_3 '{
 	if (quiet) {
 		print $5
 	} else if ($3 == "[ALPM-SCRIPTLET]" || $4 == "warning:") {
@@ -153,7 +173,7 @@ format() {
 		red = "\033[31m"
 		off = "\033[1;0m"
 
-		if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
+		if (!pkg && match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
 			date = substr($0, RSTART, RLENGTH)
 			if (!date_search && !reboot_flag && date < boot_time) {
 				print ""
