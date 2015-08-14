@@ -138,6 +138,9 @@ filter() {
 	if (!quiet) {
 		info = info "\n" $0
 		if ($3 == "[ALPM]") {
+			if ($4 == "warning:" && pkg == last_row) print info
+			else last_row = $5
+
 			if (pkg == $5) print info
 			info = ""
 		}
