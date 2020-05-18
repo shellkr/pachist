@@ -160,7 +160,7 @@ filter() {
 }
 
 format() {
-	boot_time=$(date +"%F %H:%M" -d "$(cut -f1 -d. /proc/uptime) seconds ago")
+	boot_time=$(date +'%FT%H:%M:%S+0100' -d "$(cut -f1 -d. /proc/uptime) seconds ago")
 
 	awk -F' ' -v boot_time="${boot_time}" \
 		  -v date_search="$date_search" \
@@ -178,7 +178,7 @@ format() {
 		red = "\033[31m"
 		off = "\033[1;0m"
 
-		if (!pkg && match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}/)) {
+		if (!pkg && match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}+[0-9]{4}/)) {
 			date = substr($0, RSTART, RLENGTH)
 			if (!date_search && !reboot_flag && date < boot_time) {
 				print ""
@@ -189,14 +189,18 @@ format() {
 		}
 
 		print col_1 $1, col_2 $3, col_3 $4, col_4 substr($0, index($0,$5)) off
+
 	} else if (!pkg && substr($0, index($0,$3)) == "[PACMAN] starting full system upgrade") {
 		print ""
 	}}' |
+#	([ "$(sed -e 's/\[//' -e 's/T.*//' <<<$1)" = "$(date +'%F')" ] && echo " > "$1 || echo "nope") |
+	sed -e 's/T/ /g' -e 's/+....//' $1 |
 	cat -s |
 	sed '/./,$!d' |
 	([[ $num ]] && nl -ba -nln -w3 -s ' ' || cat) |
 	sed -n -e $rows'p' |
 	tac
+
 }
 
 ## execute and show the endresult
@@ -205,12 +209,10 @@ run_pachist() {
 
 	## Default number of lines to show
 	lines="$(awk -F'"' '/lines/{print $2}' $HOME/.config/pachist.conf)"
-
 	check_args "$@"
 	get_colors
 
-	[[ $lines != *,* ]] && rows="1,$lines" || rows="$lines"  
-
+	[[ $lines != *,* ]] && rows="1,$lines" || rows="$lines"
 	tac /var/log/pacman.log | filter | format
 }
 
